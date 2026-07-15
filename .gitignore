@@ -1,0 +1,31 @@
+# Secrets -- never commit API keys
+.env
+ 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+ 
+# Jupyter
+.ipynb_checkpoints/
+ 
+# Editor / OS
+.DS_Store
+.vscode/
+*.code-workspace
+ 
+# Personal working resources (assignment PDF, extra/raw materials)
+# -- not meant for the repo.
+resources/
+ 
+# Sample form images are excluded out of caution around PII, even
+# though the samples used are believed synthetic/fictitious -- the
+# directory itself stays tracked (via .gitkeep) so the expected
+# project structure is visible; real samples are shared separately
+# (see README).
+data/*
+!data/.gitkeep

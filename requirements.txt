@@ -1,0 +1,30 @@
+# Core agent orchestration
+langgraph>=0.2.0
+langchain-core>=0.3.0
+
+# LLM provider — GPT-4o / GPT-4.1 handle multimodal extraction (form images)
+# and structured output (via OpenAI's structured outputs / function calling)
+# well. Swap for langchain-anthropic + anthropic if you get Claude access later.
+langchain-openai>=0.2.0
+openai>=1.40.0
+
+# Structured extraction schemas
+pydantic>=2.7.0
+
+# Config / secrets
+python-dotenv>=1.0.0
+
+# Image handling for scanned form ingestion
+pillow>=10.0.0
+
+# PDF ingestion -- renders each page to an image, reusing the same
+# vision extraction path. Pure-Python wheel, no system poppler
+# install needed (unlike pdf2image).
+pymupdf>=1.24.0
+
+# Testing (assignment /tests requirement)
+pytest>=8.0.0
+
+# Notebooks (assignment /notebooks requirement)
+jupyterlab>=4.0.0
+ipykernel>=6.29.0
