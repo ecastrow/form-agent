@@ -254,6 +254,6 @@ Briefly (full detail, with evidence, in `technical_considerations.md`):
 
 - [`docs/architecture_walkthrough.md`](docs/architecture_walkthrough.md) —
   how a single turn flows through the system, step by step.
-- [`technical_considerations.md`](technical_considerations.md) — every
+- [`docs/technical_considerations.md`](technical_considerations.md) — every
   design decision, the alternatives considered, and the reasoning behind
   each choice.
