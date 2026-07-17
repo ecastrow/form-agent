@@ -88,6 +88,11 @@ def form_context(form: PriorAuthForm) -> str:
         f"Service provider: {form.providers.service_provider.name}",
         f"Review type: {form.general.review_type}",
     ]
+
+    settings = form.services_requested.settings
+    if settings:
+        lines.append(f"Setting: {', '.join(settings)}")
+
     for line in form.services_requested.service_lines:
         icd_plain = lookup_icd_description(line.icd_code)
         icd_display = (
@@ -98,4 +103,53 @@ def form_context(form: PriorAuthForm) -> str:
             f"({line.code}): {line.diagnosis_description} "
             f"[{icd_display}], {line.start_date}-{line.end_date}"
         )
+
+    therapy = form.services_requested.therapy
+    if therapy and therapy.types:
+        details = [
+            d
+            for d in [
+                f"{therapy.number_of_sessions} sessions"
+                if therapy.number_of_sessions
+                else None,
+                therapy.duration,
+                f"frequency: {therapy.frequency}"
+                if therapy.frequency
+                else None,
+            ]
+            if d
+        ]
+        suffix = f" ({', '.join(details)})" if details else ""
+        lines.append(f"Therapy: {', '.join(therapy.types)}{suffix}")
+
+    home_health = form.services_requested.home_health
+    if home_health and (
+        home_health.requested
+        or home_health.number_of_visits
+        or home_health.duration
+    ):
+        details = [
+            d
+            for d in [
+                f"{home_health.number_of_visits} visits"
+                if home_health.number_of_visits
+                else None,
+                home_health.duration,
+                f"frequency: {home_health.frequency}"
+                if home_health.frequency
+                else None,
+            ]
+            if d
+        ]
+        suffix = f" ({', '.join(details)})" if details else ""
+        lines.append(f"Home health: requested{suffix}")
+
+    dme = form.services_requested.dme
+    if dme and (dme.requested or dme.equipment_or_supplies):
+        details = [
+            d for d in [dme.equipment_or_supplies, dme.duration] if d
+        ]
+        suffix = f" ({', '.join(details)})" if details else ""
+        lines.append(f"DME: requested{suffix}")
+
     return "\n".join(lines)

@@ -14,6 +14,8 @@ from src.nodes.shared import (
     resolve_forms_in_scope,
 )
 from src.schemas import (
+    DMEDetails,
+    HomeHealthDetails,
     PatientInfo,
     PriorAuthForm,
     ProviderInfo,
@@ -21,6 +23,7 @@ from src.schemas import (
     ServiceLine,
     ServiceProviderDetail,
     ServicesRequested,
+    TherapyDetails,
 )
 
 
@@ -133,6 +136,62 @@ def test_form_context_includes_service_line_details():
     form = _minimal_form("a.png", "Daniel Jarvis")
     context = form_context(form)
     assert "X" in context  # the planned_service_or_procedure value
+
+
+def test_form_context_includes_therapy_when_present():
+    """Real bug reproduced: therapy data was silently omitted.
+
+    This is the exact shape of data that was extracted correctly
+    for Daniel's real form but never reached the LLM's prompt,
+    causing the agent to incorrectly say no therapy was found.
+    """
+    form = _minimal_form("a.png", "Daniel Jarvis")
+    form.services_requested.therapy = TherapyDetails(
+        types=["Mental Health/Substance Abuse"],
+        number_of_sessions="4",
+        duration="2 weeks",
+    )
+    context = form_context(form)
+    assert "Mental Health/Substance Abuse" in context
+    assert "4 sessions" in context
+    assert "2 weeks" in context
+
+
+def test_form_context_omits_therapy_when_not_present():
+    """No therapy types means no Therapy line -- not a noisy 'None'."""
+    form = _minimal_form("a.png", "Daniel Jarvis")
+    context = form_context(form)
+    assert "Therapy" not in context
+
+
+def test_form_context_includes_settings_when_present():
+    """Setting checkboxes (e.g. Outpatient) reach the context."""
+    form = _minimal_form("a.png", "Daniel Jarvis")
+    form.services_requested.settings = ["Outpatient"]
+    context = form_context(form)
+    assert "Setting: Outpatient" in context
+
+
+def test_form_context_includes_home_health_when_requested():
+    """Home health details reach the context when populated."""
+    form = _minimal_form("a.png", "Daniel Jarvis")
+    form.services_requested.home_health = HomeHealthDetails(
+        requested=True, number_of_visits="3"
+    )
+    context = form_context(form)
+    assert "Home health: requested" in context
+    assert "3 visits" in context
+
+
+def test_form_context_includes_dme_when_requested():
+    """DME details reach the context when populated."""
+    form = _minimal_form("a.png", "Daniel Jarvis")
+    form.services_requested.dme = DMEDetails(
+        requested=True, equipment_or_supplies="Wheelchair"
+    )
+    context = form_context(form)
+    assert "DME: requested" in context
+    assert "Wheelchair" in context
 
 
 def test_form_context_enriches_known_icd_code():
