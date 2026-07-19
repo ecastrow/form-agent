@@ -18,6 +18,35 @@ grid, LLM only for free text) was considered for its lower cost and
 predictability, but rejected in favor of a single pipeline — see the
 normalization principle below.
 
+**Three OCR/layout-parsing alternatives were researched for the checkbox
+weak point above, none adopted for this release:**
+
+- **Docling** (IBM, open-source, LangChain/LlamaIndex integration) —
+  layout-aware checkbox/radio detection goes beyond raw Tesseract, but
+  documentation flags struggles with scanned/handwritten/camera-captured
+  input, close to this project's actual profile. Its LangChain integration
+  targets RAG document-chunking, a different problem than field-level
+  extraction into a validated schema.
+- **LLMWhisperer** (Unstract) — not itself an LLM; advanced OCR plus a
+  parsing/layout layer, per its own documentation. Marketed specifically
+  for this project's exact domain (insurance/healthcare forms with
+  handwritten fields and checkboxes), with form-mode output rendering
+  checkbox state directly. Caveat: every source found was the vendor's own
+  blog, with no independent benchmark located.
+- **AWS Textract** — a dedicated Forms model with checkbox/key-value
+  detection, HIPAA-eligible and PCI DSS certified. Evidence here is more
+  balanced than the other two: AWS's own support community shows genuine
+  accuracy complaints tied to image quality and formatting consistency,
+  and AWS's own recommended fix for low-confidence cases is pairing with
+  human review (Amazon Augmented AI) — echoing this project's own "don't
+  trust confidence alone" escalation design.
+
+None were benchmarked against this project's actual sample forms — the
+appropriate next step before treating any as conclusive. Adopting any as a
+first-pass filter alongside the vision-LLM path would reintroduce the
+two-pipeline inconsistency tradeoff already rejected in the normalization
+principle above.
+
 **Every input format is normalized to an image and routed through one vision
 extraction path** — PNG/JPG, scanned PDF, and even a text-native PDF with
 real embedded text. A text-native PDF could technically skip vision entirely
@@ -127,6 +156,13 @@ setting — cheap defense-in-depth given the explicit allowlist already exists.
 `latest_user_text`, `form_context`, `conversation_history_text`) live in
 `/src/nodes/shared.py` rather than being duplicated or privately
 cross-imported between node modules.
+
+**`form_context()` is the single source of prompt data for `summarize_node`
+and `qa_node`** — it covers every populated field under `services_requested`
+(service lines, setting, therapy, home health, DME), not just service lines.
+Sections with no real data (e.g. no therapy type checked) are omitted
+entirely rather than shown as empty/`None`, so the prompt stays clean without
+under-representing what the form actually contains.
 
 ---
 
