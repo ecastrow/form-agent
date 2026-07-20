@@ -1,8 +1,7 @@
 # Intelligent Form Agent — Technical Considerations & Tradeoffs
 
 A reference record of the system's design decisions and the reasoning behind
-them, organized by topic. This describes the current design — it is not a
-turn-by-turn history of how the project was built.
+them, organized by topic.
 
 ---
 
@@ -139,17 +138,6 @@ explicitly on every call to `build_turn_update()` (both `True` and `False`
 cases, never omitted, since LangGraph's partial-update semantics leave
 omitted keys unchanged) and is what the graph's routing actually checks.
 
-**Checkpointing uses an explicit msgpack allowlist**, not the default
-permissive setting. `PriorAuthForm` is a custom type stored in
-`state["forms"]` and checkpointed every turn; LangGraph's default serializer
-warns (and in future versions will block) reconstruction of any custom type
-it doesn't explicitly recognize — defense-in-depth against a compromised
-checkpoint store being able to trigger arbitrary object reconstruction on
-load. `graph.py` builds an explicit `JsonPlusSerializer(allowed_msgpack_modules=
-[("src.schemas", "PriorAuthForm")])` and passes it to `MemorySaver(serde=...)`.
-`LANGGRAPH_STRICT_MSGPACK=true` is recommended as an additional `.env`
-setting — cheap defense-in-depth given the explicit allowlist already exists.
-
 **Modularity:** node functions are independently testable units under
 `/src/nodes/`, schemas in `/src/schemas.py`, graph wiring isolated in
 `/src/graph.py`. Helpers shared by more than one node (`resolve_forms_in_scope`,
@@ -190,7 +178,7 @@ second LLM call.
 **Non-critical fields are still recorded but do not trigger escalation on
 their own** — e.g. an illegible issuer name or fax number. Escalating on any
 flagged field, regardless of relevance, would conflict directly with the
-project's "minimize manual review" goal, since uncertainty in non-essential
+project's goal to minimize manual review goal, since uncertainty in non-essential
 fields is routine, not exceptional. Implemented via a `CRITICAL_FIELD_PREFIXES`
 allowlist checked against flagged field paths.
 
@@ -254,19 +242,14 @@ in the existing `form_context()` — no changes to either node, the graph, or
 the schema, since prompt-context construction for both `summarize_node` and
 `qa_node` was already centralized in one place.
 
-**Reference set (7 codes, matching this project's sample forms) verified
-individually against icd10data.com/AAPC, not generated from memory.**
-Medical codes are precise; two of the seven, checked during verification,
-would have been meaningfully wrong if pulled from unverified recall — one
-differed in laterality, encounter type, and healing status. Verification
-mattered specifically because the entire point of doing this via lookup
-rather than letting the LLM guess is that the reference data itself has to
-be correct. Unknown codes fall back to displaying the raw code, never
-silently dropped and never fabricated.
+**Reference set (7 codes, matching available sample forms) is verified
+against authoritative sources (icd10data.com/AAPC).**
+Medical codes are precise, and the reference data's accuracy matters
+directly here. Unknown codes fall back to
+displaying the raw code, never silently dropped and never fabricated.
 
 **Scaling beyond the sample-data code set is explicitly out of scope for
-this release**, and the reason isn't just "a bigger table" — it's a
-different retrieval strategy. Exact match stays correct for the common case
+this release**. Exact match stays correct for the common case
 (a clean, correctly-extracted code). Handling the full official ICD-10-CM
 set (70,000+ codes) for arbitrary real-world forms would need embedding-based
 semantic search over code *descriptions* running alongside exact match, to
@@ -299,12 +282,13 @@ change) — resolved in favor of the LLM path, per Section 1.
 
 ## 8. Domain Specificity (Healthcare / Insurance)
 
-**Core architecture stays generic and schema-driven**, per the assignment's
-explicit "wide variety of forms" framing — but the demo and select creative
-extensions (ICD code explanation, urgency flagging, prior-auth-specific
-insights) lean into the healthcare/insurance domain reflected in the actual
-sample data. This shows domain awareness in the demo without narrowing the
-underlying engineering solution.
+**Core architecture stays generic and schema-driven**, in line with a
+design goal of handling a wide variety of forms rather than only this
+domain — but the demo and select creative extensions (ICD code explanation,
+urgency flagging, prior-auth-specific insights) lean into the
+healthcare/insurance domain reflected in the actual sample data. This shows
+domain awareness in the demo without narrowing the underlying engineering
+solution.
 
 ---
 
@@ -329,8 +313,8 @@ re-showing the model the image alongside its own extracted JSON and asking
 it to check for disagreements — would likely be meaningfully more reliable
 than self-report, since checking a specific claim against evidence is a
 different task than rating one's own first-pass output. Cost: roughly 2x LLM
-calls/latency per form. Deliberately deferred given the project's time
-constraints; see Section 11.
+calls/latency per form. Deliberately deferred for a later relase; see
+Section 11.
 
 **Text-native PDFs pay for a vision LLM call they don't strictly need** — an
 accepted tradeoff for pipeline uniformity (Section 1).
@@ -349,13 +333,13 @@ multi-turn memory, escalation surfacing) — useful for understanding the
 codebase, not for understanding why it's shaped this way.
 
 **Notebooks, two of them, different purposes:**
-`notebooks/demo_example_runs.ipynb` satisfies the assignment's required
-demonstration (single-form QA, single-form summary, multi-form holistic
-answer); `notebooks/adversarial_escalation_tests.ipynb` exercises the
-escalation policy against real broken forms (missing provider, missing
-patient name, missing services, across PNG and PDF) as engineering-rigor
-evidence beyond the minimum requirement. No separate "extraction only"
-notebook — `scripts/try_extraction.py` already covers that ground.
+`notebooks/demo_example_runs.ipynb` covers the three core demonstration
+cases (single-form QA, single-form summary, multi-form holistic answer);
+`notebooks/adversarial_escalation_tests.ipynb` exercises the escalation
+policy against real broken forms (missing provider, missing patient name,
+missing services, across PNG and PDF) as additional engineering-rigor
+evidence. No separate "extraction only" notebook —
+`scripts/try_extraction.py` already covers that ground.
 
 **Sample form images are not committed to the repository**, out of caution
 around PII, even though the samples used are believed to be synthetic or

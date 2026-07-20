@@ -105,7 +105,7 @@ does not verify real extraction quality — that's what the notebooks are for.
 
 Two notebooks under `notebooks/`, both making real (billed) API calls:
 
-- **`demo_example_runs.ipynb`** — the three required demonstration runs:
+- **`demo_example_runs.ipynb`** — three demonstration runs:
   single-form Q&A, single-form summary, multi-form holistic comparison.
 - **`adversarial_escalation_tests.ipynb`** — the escalation policy exercised
   against real forms with deliberately damaged fields (missing patient name,
@@ -183,7 +183,7 @@ are believed to be synthetic/fictitious. `data/` ships with only a
 placeholder so the expected project structure is visible; the actual sample
 forms used for the demonstrations and tests are shared separately.
 
-## Creativity extensions
+## Beyond the core pipeline
 
 Beyond the core QA/summarization pipeline, this project includes:
 
@@ -196,9 +196,8 @@ Beyond the core QA/summarization pipeline, this project includes:
   the LLM's own self-reported confidence, because that self-report was
   directly tested and found not to reliably correlate with correctness
   (see `technical_considerations.md`, Known Limitations).
-- **RAG-enriched diagnosis codes**, verified against real ICD-10-CM sources
-  rather than generated from memory, woven directly into summaries and
-  answers.
+- **RAG-enriched diagnosis codes**, checked against authoritative ICD-10-CM
+  sources for accuracy, woven directly into summaries and answers.
 - **Real-data adversarial testing** — an entire notebook exercising the
   escalation policy against actual damaged forms (blurred/blocked fields),
   not just synthetic test fixtures.
@@ -254,6 +253,7 @@ Briefly (full detail, with evidence, in `technical_considerations.md`):
 
 - [`docs/architecture_walkthrough.md`](docs/architecture_walkthrough.md) —
   how a single turn flows through the system, step by step.
-- [`docs/technical_considerations.md`](docs/technical_considerations.md) — every
-  design decision, the alternatives considered, and the reasoning behind
-  each choice.
+- [`docs/technical_considerations.md`](docs/technical_considerations.md) —
+  every design decision, the alternatives considered, and the reasoning
+  behind each choice.
+
